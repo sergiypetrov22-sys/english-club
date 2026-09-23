@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Club - Flashcards</title>
+    <style>
+        /* --- БАЗОВІ НАЛАШТУВАННЯ ТА ЕСТЕТИКА (CSS) --- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f7f5f0; /* Теплий кремовий фон, що не ріже око */
+            color: #2b2625; /* Колір темного еспресо для тексту */
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .club-title {
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #8c7a6b; /* Стриманий кавово-сірий */
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .lesson-title {
+            font-size: 1.5rem;
+            margin: 0 0 30px 0;
+            color: #2b2625;
+            font-weight: 400;
+        }
+
+        /* --- КОНТЕЙНЕР ДЛЯ КАРТКИ З 3D ЕФЕКТОМ --- */
+        .card-container {
+            width: 320px;
+            height: 220px;
+            perspective: 1000px; /* Створює глибину для 3D обертання */
+            cursor: pointer;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.5s ease; /* Плаве перевертання */
+            box-shadow: 0 10px 25px rgba(43, 38, 37, 0.05); /* Дуже м'яка тінь */
+            border-radius: 12px;
+        }
+
+        /* Клас, який JS додаватиме при кліку для перевертання */
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        /* Загальний стиль для обох сторін картки */
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden; /* Ховає зворотну сторону при обертанні */
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 25px;
+            box-sizing: border-box;
+            border: 1px solid #e6dec9; /* Тонка елегантна рамка */
+        }
+
+        /* ЛИЦЬОВА СТОРОНА (Англійська фраза) */
+        .card-front {
+            background-color: #ffffff;
+        }
+
+        .phrase-en {
+            font-size: 1.6rem;
+            font-weight: 500;
+            color: #1e291e; /* Глибокий оливково-чорний */
+            text-align: center;
+            margin: 0 0 10px 0;
+        }
+
+        .hint {
+            font-size: 0.8rem;
+            color: #a69585;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: absolute;
+            bottom: 15px;
+        }
+
+        /* ЗВОРОТНА СТОРОНА (Переклад та контекст) */
+        .card-back {
+            background-color: #fcfbfa;
+            transform: rotateY(180deg); /* Початково розвернута в 3D просторі */
+        }
+
+        .phrase-ua {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #b85c38; /* Стримана шляхетна теракота для перекладу */
+            text-align: center;
+            margin: 0 0 12px 0;
+        }
+
+        .context-example {
+            font-size: 0.95rem;
+            font-style: italic;
+            color: #5c5552;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        /* --- КНОПКИ ТА ПРОГРЕС --- */
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            background-color: #2b2625;
+            color: #f7f5f0;
+            border: none;
+            padding: 10px 22px;
+            font-size: 0.95rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn:hover {
+            background-color: #4a413f; /* Легке освітлення при наведенні */
+        }
+
+        .progress-text {
+            font-size: 0.9rem;
+            color: #8c7a6b;
+            min-width: 50px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="club-title">English Speaking Club</div>
+    <div class="lesson-title">Фрази тижня від викладача</div>
+
+    <!-- Контейнер картки -->
+    <div class="card-container" onclick="flipCard()">
+        <div class="card" id="flashcard">
+            
+            <!-- Лицьова сторона -->
+            <div class="card-face card-front">
+                <div class="phrase-en" id="text-en">Loading...</div>
+                <div class="hint">Натисніть, щоб перекласти</div>
+            </div>
+            
+            <!-- Зворотна сторона -->
+            <div class="card-face card-back">
+                <div class="phrase-ua" id="text-ua">Завантаження...</div>
+                <div class="context-example" id="text-example">Приклад використання...</div>
+                <div class="hint">Натисніть, щоб повернути</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Кнопки управління та лічильник -->
+    <div class="controls">
+        <button class="btn" onclick="prevCard(event)">Назад</button>
+        <span class="progress-text" id="progress">1 / 3</span>
+        <button class="btn" onclick="nextCard(event)">Далі</button>
+    </div>
+
+    <script>
+        /* --- ЛОГІКА ТА ІНТЕРАКТИВ (JavaScript) --- */
+
+        // База даних фраз (ваш брат може легко дописувати сюди нові фрази через Блокнот)
+        const wordsData = [
+            {
+                en: "Read between the lines",
+                ua: "Читати між рядками",
+                example: "Don't just listen to what he says, read between the lines."
+            },
+            {
+                en: "Cost an arm and a leg",
+                ua: "Коштувати цілі статки",
+                example: "This new smart home system cost me an arm and a leg."
+            },
+            {
+                en: "Hit the nail on the head",
+                ua: "Влучити в саме яблучко (в точку)",
+                example: "Your analysis of the market situation hit the nail on the head."
+            }
+        ];
+
+        let currentIndex = 0;
+        const cardElement = document.getElementById('flashcard');
+
+        // Функція оновлення тексту на картці
+        function updateCard() {
+            // Повертаємо картку в початкове положення перед зміною тексту
+            cardElement.classList.remove('is-flipped');
+            
+            // Робимо невеличку паузу, поки картка розвертається назад, і міняємо текст
+            setTimeout(() => {
+                document.getElementById('text-en').innerText = wordsData[currentIndex].en;
+                document.getElementById('text-ua').innerText = wordsData[currentIndex].ua;
+                document.getElementById('text-example').innerText = wordsData[currentIndex].example;
+                document.getElementById('progress').innerText = `${currentIndex + 1} / ${wordsData.length}`;
+            }, 200);
+        }
+
+        // Функція перевертання
+        function flipCard() {
+            cardElement.classList.toggle('is-flipped');
+        }
+
+        // Кнопка "Далі"
+        function nextCard(event) {
+            event.stopPropagation(); // Щоб клік на кнопку не перевертав саму картку
+            if (currentIndex < wordsData.length - 1) {
+                currentIndex++;
+                updateCard();
+            }
+        }
+
+        // Кнопка "Назад"
+        function prevCard(event) {
+            event.stopPropagation(); // Щоб клік на кнопку не перевертав саму картку
+            if (currentIndex > 0) {
+                currentIndex--;
+                updateCard();
+            }
+        }
+
+        // Запуск першої картки при завантаженні сторінки
+        updateCard();
+    </script>
+</body>
+</html>
